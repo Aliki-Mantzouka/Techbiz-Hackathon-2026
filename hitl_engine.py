@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
-from main import ADMIN_EMAIL, ADMIN_EMAIL, SENDER_EMAIL, SENDER_PASSWORD, SMTP_SERVER
 from sqlmodel import Session, select
 from typing import Optional
 from datetime import datetime
@@ -81,34 +80,3 @@ def get_discord_buttons(task_id: int):
     reject_link = f"{BASE_URL}/hitl-v2/respond/{task_id}?decision=rejected"
     
     return approve_link, reject_link
-
-#import smtplib
-#from email.mime.text import MIMEText
-#from email.mime.multipart import MIMEMultipart
-
-#def send_hitl_email(task_id, agent_id, context):
- #   msg = MIMEMultipart()
-  #  msg['From'] = SENDER_EMAIL
-   # msg['To'] = ADMIN_EMAIL
-   # msg['Subject'] = f"🚨 HITL Approval Required (Task #{task_id})"
-
-    #body = f"""
- #   Γεια σας,
- #   Ένα νέο αίτημα από τον Agent '{agent_id}' απαιτεί την έγκρισή σας.
- #   
- #   Περιεχόμενο: {context}
- #   Task ID: {task_id}
-    
-  #  Μπορείτε να απαντήσετε μέσω του Gateway Dashboard.
-   # """
- #   msg.attach(MIMEText(body, 'plain'))
-
-#    try:
- #       server = smtplib.SMTP(SMTP_SERVER, smtplib.SMTP_PORT)
-  #      server.starttls()
-   #     server.login(SENDER_EMAIL, SENDER_PASSWORD)
-    #    server.send_message(msg)
-#        server.quit()
- #       print("Email sent successfully!")
-  #  except Exception as e:
-   #     print(f"Failed to send email: {e}")
