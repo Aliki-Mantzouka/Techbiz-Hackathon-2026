@@ -4,6 +4,7 @@ from sqlmodel import SQLModel, Field, Session, create_engine
 from typing import Optional
 from pydantic import BaseModel
 import httpx
+from ntfy import broadcast_to_ntfy
 
 from database import engine, HITLTask, SQLModel
 
@@ -51,17 +52,15 @@ async def send_to_discord(data: NotificationInput):
 # --- 2. NTFY (MOBILE) SECTION ---
 @app.post("/ntfy/send", tags=["NTFY (Mobile)"])
 async def send_to_ntfy(data: NotificationInput):
-    """Στέλνει ΜΟΝΟ στο NTFY."""
     with Session(engine) as session:
         new_task = HITLTask(agent_id=data.agent_id, context=data.context, urgency=data.urgency)
         session.add(new_task)
         session.commit()
         session.refresh(new_task)
-        msg_text = f"📱 [Mobile Alert] {new_task.agent_id}: {new_task.context}"
 
-    async with httpx.AsyncClient() as client:
-        for topic in NTFY_TOPICS:
-            await client.post(f"https://ntfy.sh/{topic}", data=msg_text.encode('utf-8'))
+    # Συνάρτηση
+    await broadcast_to_ntfy(new_task.agent_id, new_task.context)
+    
     return {"status": "Sent to Mobile", "task_id": new_task.id}
 
 # --- 3. MANAGEMENT ---
