@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "insert your email"
-SENDER_PASSWORD = "16-digit code"
+SENDER_PASSWORD = "16-digit password"
 
 async def send_approval_email(agent_id: str, context: str, task_id: int, receiver_email: str):
     """
