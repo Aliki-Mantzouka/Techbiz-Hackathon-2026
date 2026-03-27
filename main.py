@@ -1,3 +1,4 @@
+from fastapi.openapi.docs import get_swagger_ui_html
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -18,7 +19,7 @@ from hitl_engine import get_discord_buttons, BASE_URL
 # Ορισμός φακέλου για τα HTML αρχεία
 templates = Jinja2Templates(directory="templates")
 
-app = FastAPI(title="Multi-Channel HITL Gateway")
+app = FastAPI(title="Multi-Channel HITL Gateway", description="A gateway for Human-in-the-Loop requests via Email, Mobile (ntfy), and Discord.", version="1.0")
 
 # --- ΡΥΘΜΙΣΕΙΣ ---
 SENDER_EMAIL = "evavioleti04@gmail.com"
@@ -131,7 +132,7 @@ async def send_to_ntfy_standalone(data: NotificationInput):
     return {"status": "Sent to Mobile", "task_id": new_task.id}
 
 # --- 2. MULTI-CHANNEL REQUEST (DISCORD + NTFY) ---
-@app.post("/hitl/request", tags=["HITL Main"])
+@app.post("/hitl/request", tags=["HITL Discord"])
 async def create_hitl_request(task: HITLTask):
     with Session(engine) as session:
         session.add(task)
