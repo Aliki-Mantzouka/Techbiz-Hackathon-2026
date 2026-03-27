@@ -1,7 +1,5 @@
 import httpx
 
-# ΡΥΘΜΙΣΕΙΣ ΓΙΑ ΤΟ NTFY
-# Εδώ ορίζεις ποιοι θα λαμβάνουν τα μηνύματα
 NTFY_TOPICS = ["eva04", "nodashackathon"]
 
 async def broadcast_to_ntfy(agent_id: str, context: str, task_id: int = None, base_url: str = ""):
@@ -28,12 +26,14 @@ async def broadcast_to_ntfy(agent_id: str, context: str, task_id: int = None, ba
                 headers["Actions"] = actions
 
             try:
-                res = await client.post(
-                    f"https://ntfy.sh/{topic}", 
+                await client.post(
+                    f"https://ntfy.sh/{topic}",
                     data=msg_text.encode('utf-8'),
-                    headers=headers
+                    headers={
+                        "Title": "New Approval Required",
+                        "Priority": "high",
+                        "Tags": "envelope"
+                    }
                 )
-                if res.status_code == 200:
-                    print(f"✅ Interactive notification sent to: {topic}")
             except Exception as e:
-                print(f"❌ Error broadcasting to {topic}: {str(e)}")
+                print(f"Error: {e}")

@@ -63,6 +63,8 @@ async def advanced_respond(task_id: int, decision: str):
         </body></html>"""
 
 def get_discord_buttons(task_id: int):
-    app_link = f"{BASE_URL}/hitl-v2/respond/{task_id}?decision=approved"
-    rej_link = f"{BASE_URL}/hitl-v2/respond/{task_id}?decision=rejected"
-    return app_link, rej_link
+    # Αυτά τα links καλούν το endpoint που ήδη έχουμε στο hitl_engine
+    approve_link = f"{BASE_URL}/hitl-v2/respond/{task_id}?decision=approved"
+    reject_link = f"{BASE_URL}/hitl-v2/respond/{task_id}?decision=rejected"
+    
+    return approve_link, reject_link
