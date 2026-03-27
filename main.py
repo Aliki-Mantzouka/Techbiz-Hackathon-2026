@@ -232,7 +232,7 @@ async def send_to_email(data: NotificationInput, target_email: str):
    
 
     return {"status": "Email Sent Successfully", "task_id": new_task.id}
-        session.refresh(new_task) # Εδώ η SQLModel μας δίνει το πραγματικό new_task.id
+    session.refresh(new_task) # Εδώ η SQLModel μας δίνει το πραγματικό new_task.id
 
     # 2. Στέλνουμε το email χρησιμοποιώντας το πραγματικό ID
     success = await send_approval_email(
