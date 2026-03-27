@@ -3,7 +3,6 @@ from fastapi import HTTPException
 from sqlmodel import SQLModel, Field, Session, create_engine
 from typing import Optional
 import httpx
-from datetime import datetime, timezone
 
 
 # 1. Setup Βάσης Δεδομένων (SQLite)
@@ -13,7 +12,7 @@ class HITLTask(SQLModel, table=True):
     context: str
     urgency: str  # low, medium, high
     status: str = "pending" # pending, approved, rejected 
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+
 
 sqlite_url = "sqlite:///database.db"
 engine = create_engine(sqlite_url)
@@ -22,7 +21,7 @@ app = FastAPI()
 #φτιαχνουμε το database και το table αν δεν υπάρχουν ήδη
 @app.on_event("startup")
 def on_startup():
-    SQLModel.metadata.create_all(HITLTask.engine)
+    SQLModel.metadata.create_all(engine)
 
 @app.get("/")
 def home():
