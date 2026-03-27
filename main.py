@@ -1,4 +1,3 @@
-from fastapi.openapi.docs import get_swagger_ui_html
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -10,6 +9,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional
 
+# Εισαγωγή για το Custom Swagger UI
+from fastapi.openapi.docs import get_swagger_ui_html
+
 # --- ΕΙΣΑΓΩΓΗ ΑΠΟ ΤOΠΙΚΑ ΑΡΧΕΙΑ ---
 from ntfy import broadcast_to_ntfy
 from database import engine, HITLTask
@@ -19,7 +21,25 @@ from hitl_engine import get_discord_buttons, BASE_URL
 # Ορισμός φακέλου για τα HTML αρχεία
 templates = Jinja2Templates(directory="templates")
 
-app = FastAPI(title="Multi-Channel HITL Gateway", description="A gateway for Human-in-the-Loop requests via Email, Mobile (ntfy), and Discord.", version="1.0")
+# Αρχικοποίηση με απενεργοποιημένο το default docs_url
+app = FastAPI(
+    title="Multi-Channel HITL Gateway", 
+    description="A gateway for Human-in-the-Loop requests via Email, Mobile (ntfy), and Discord.", 
+    version="1.0",
+    docs_url=None, 
+    redoc_url=None
+)
+
+# --- CUSTOM SWAGGER UI ENDPOINT ---
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - API Docs",
+        swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
+        swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
+        swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png",
+    )
 
 # --- ΡΥΘΜΙΣΕΙΣ ---
 SENDER_EMAIL = "evavioleti04@gmail.com"
@@ -33,7 +53,7 @@ DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1487051436456939620/usdf
 def on_startup():
     SQLModel.metadata.create_all(engine)
 
-# Μοντέλο για το Swagger
+# Μοντέλο για το Swagger input
 class NotificationInput(BaseModel):
     agent_id: str
     context: str
@@ -44,7 +64,6 @@ async def send_approval_email(agent_id: str, context: str, task_id: int, receive
     subject = f"🚨 HITL Action Required (ID: {task_id})"
     base_url = base_url.rstrip("/")
     
-    # Links για τα κουμπιά
     approve_url = f"{base_url}/hitl-v2/respond/{task_id}?decision=approved"
     reject_url = f"{base_url}/hitl-v2/respond/{task_id}?decision=rejected"
 
@@ -82,12 +101,12 @@ async def send_approval_email(agent_id: str, context: str, task_id: int, receive
         return False
 
 # --- 1. EMAIL SECTION ---
-@app.post("/email/send", tags=["Email"])
+@app.post("/email/send", tags=["📧 Email"])
 async def send_to_email(data: NotificationInput, target_email: str):
     with Session(engine) as session:
         new_task = HITLTask(
-            agent_id=data.agent_id, 
-            context=data.context, 
+            agent_id=data.agent_id,
+            context=data.context,
             urgency=data.urgency,
             status="pending"
         )
@@ -107,13 +126,14 @@ async def send_to_email(data: NotificationInput, target_email: str):
         return {"status": "Email sent successfully", "task_id": new_task.id}
     else:
         raise HTTPException(status_code=500, detail="Failed to send email")
-    
-@app.post("/ntfy/send", tags=["NTFY (Mobile)"])
+
+# --- 2. NTFY SECTION ---
+@app.post("/ntfy/send", tags=["📱 NTFY (Mobile)"])
 async def send_to_ntfy_standalone(data: NotificationInput):
     with Session(engine) as session:
         new_task = HITLTask(
-            agent_id=data.agent_id, 
-            context=data.context, 
+            agent_id=data.agent_id,
+            context=data.context,
             urgency=data.urgency,
             status="pending"
         )
@@ -121,18 +141,17 @@ async def send_to_ntfy_standalone(data: NotificationInput):
         session.commit()
         session.refresh(new_task)
 
-    # Καλούμε τη συνάρτηση από το ntfy.py
     await broadcast_to_ntfy(
-        new_task.agent_id, 
-        new_task.context, 
-        task_id=new_task.id, 
+        new_task.agent_id,
+        new_task.context,
+        task_id=new_task.id,
         base_url=BASE_URL
     )
     
     return {"status": "Sent to Mobile", "task_id": new_task.id}
 
-# --- 2. MULTI-CHANNEL REQUEST (DISCORD + NTFY) ---
-@app.post("/hitl/request", tags=["HITL Discord"])
+# --- 3. DISCORD SECTION ---
+@app.post("/hitl/request", tags=["💬 HITL Discord"])
 async def create_hitl_request(task: HITLTask):
     with Session(engine) as session:
         session.add(task)
@@ -141,7 +160,6 @@ async def create_hitl_request(task: HITLTask):
         
         app_url, rej_url = get_discord_buttons(task.id)
         
-        # 1. Πάντα στο Discord
         discord_msg = {
             "content": f"🚨 **New HITL Request** (#{task.id})\n"
                        f"**Agent:** `{task.agent_id}`\n"
@@ -152,18 +170,17 @@ async def create_hitl_request(task: HITLTask):
         async with httpx.AsyncClient() as client:
             await client.post(DISCORD_WEBHOOK_URL, json=discord_msg)
             
-            # 2. Αν είναι High Urgency, στείλε και Mobile (ntfy)
             if task.urgency.lower() == "high":
                 await broadcast_to_ntfy(
                     task.agent_id,
-                    task.context, 
-                    task_id=task.id, 
+                    task.context,
+                    task_id=task.id,
                     base_url=BASE_URL
                 )
     return {"status": "dispatched", "task_id": task.id}
 
-# --- 3. DASHBOARD & MANAGEMENT ---
-@app.get("/hitl-v2/dashboard", response_class=HTMLResponse, tags=["HITL Engine"])
+# --- 4. DASHBOARD & MANAGEMENT ---
+@app.get("/hitl-v2/dashboard", response_class=HTMLResponse, tags=["⚙️ HITL Engine"])
 async def get_dashboard(request: Request):
     with Session(engine) as session:
         tasks = session.exec(select(HITLTask)).all()
