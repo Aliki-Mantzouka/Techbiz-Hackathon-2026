@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import FastAPI, Request
 import httpx
 from fastapi import FastAPI
@@ -95,3 +97,31 @@ async def create_hitl_request(task: HITLTask):
             await client.post(DISCORD_WEBHOOK_URL, json=message)
             
     return {"status": "queued", "task_id": task.id}
+
+
+@app.post("/hitl/respond/{task_id}")
+async def human_respond(task_id: int, decision: str, feedback: Optional[str] = None):
+    """
+    Endpoint για την απόκριση του ανθρώπου.
+    decision: 'approved' ή 'rejected'
+    """
+    with Session(engine) as session:
+        # 1. Αναζήτηση του Task (State Management)
+        task = session.get(HITLTask, task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        # 2. Ενημέρωση Κατάστασης & Audit Trail
+        task.status = decision
+        # Αν θέλεις, πρόσθεσε πεδίο feedback στο HITLTask model σου
+        session.add(task)
+        session.commit()
+        session.refresh(task)
+        
+        print(f"Task {task_id} updated to {decision} by human.")
+        
+        return {
+            "message": f"Task {task_id} is now {decision}",
+            "audit_log": f"Updated at {datetime.now()}"
+        }
+    
