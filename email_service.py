@@ -5,8 +5,8 @@ from email.mime.multipart import MIMEMultipart
 # ΡΥΘΜΙΣΕΙΣ ΓΙΑ ΤΟ EMAIL
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SENDER_EMAIL = "evavioleti04@gmail.com"
-SENDER_PASSWORD = "rvgm psaf yxod geqz"
+SENDER_EMAIL = "your email"
+SENDER_PASSWORD = "your 16-digit app password"
 
 async def send_approval_email(agent_id: str, context: str, task_id: int, receiver_email: str, base_url: str):
     """
