@@ -1,6 +1,6 @@
 import httpx
 
-NTFY_TOPICS = ["eva04", "nodashackathon"]
+NTFY_TOPICS = ["a notify username", "a notify username"]
 
 async def broadcast_to_ntfy(agent_id: str, context: str, task_id: int = None, base_url: str = ""):
     # Το κείμενο του μηνύματος
