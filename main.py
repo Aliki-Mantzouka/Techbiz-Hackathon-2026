@@ -46,7 +46,7 @@ SENDER_EMAIL = "your email"
 SENDER_PASSWORD = "your 16-digit app password"
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1487051436456939620/usdfzS6VGQ2cbGtJsGlP5MblxJdcWiN58QNkGBTwGn6ivn-aIffdXJVrnmVvzbEZ3yrc"
+DISCORD_WEBHOOK_URL = "your Discord webhook URL"
 
 # Δημιουργία πινάκων στην εκκίνηση
 @app.on_event("startup")
