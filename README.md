@@ -1,6 +1,7 @@
 # 🤖 Multi-Channel HITL Gateway
 
 Hackathon challenge by Microsoft: Human-in-the-Loop Governance for AI Agents. 
+
 A work-in-progress Human-in-the-Loop (HITL) system that enables AI Agents to request human approval via multiple interactive channels (Discord, ntfy, Email). The system ensures Governance and a robust Audit Trail for critical business decisions.
 
 **📋 Prerequisites**
